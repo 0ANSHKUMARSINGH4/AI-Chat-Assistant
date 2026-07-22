@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function init() {
         // Load data from localStorage
-        const storedConversations = localStorage.getItem('gemini_chats');
+        const storedConversations = localStorage.getItem('rays_chats') || localStorage.getItem('gemini_chats');
         if (storedConversations) {
             try {
                 conversations = JSON.parse(storedConversations);
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        const lastActiveId = localStorage.getItem('gemini_active_chat');
+        const lastActiveId = localStorage.getItem('rays_active_chat') || localStorage.getItem('gemini_active_chat');
         
         renderSidebar();
         
@@ -186,11 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- State and UI Update Functions ---
 
     function saveState() {
-        localStorage.setItem('gemini_chats', JSON.stringify(conversations));
+        localStorage.setItem('rays_chats', JSON.stringify(conversations));
         if (activeConversationId) {
-            localStorage.setItem('gemini_active_chat', activeConversationId);
+            localStorage.setItem('rays_active_chat', activeConversationId);
         } else {
-            localStorage.removeItem('gemini_active_chat');
+            localStorage.removeItem('rays_active_chat');
         }
     }
 

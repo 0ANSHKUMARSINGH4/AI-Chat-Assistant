@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chat Assistant</title>
+    <title>RAYS — Right At Your Service</title>
     
     <!-- Google Fonts: Outfit (Headings) & Inter (Body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,9 +23,12 @@
             <div class="sidebar-header">
                 <div class="brand">
                     <div class="brand-logo">
-                        <i data-lucide="sparkles" class="logo-icon"></i>
+                        <i data-lucide="sun" class="logo-icon"></i>
                     </div>
-                    <span class="brand-name">Gemini Chat</span>
+                    <div class="brand-text">
+                        <span class="brand-name">RAYS</span>
+                        <span class="brand-sub">Right At Your Service</span>
+                    </div>
                 </div>
                 <button class="mobile-close-btn" id="mobileCloseBtn">
                     <i data-lucide="x"></i>
@@ -59,7 +62,7 @@
                 {% else %}
                 <div class="api-success-badge">
                     <i data-lucide="check-circle" class="success-icon"></i>
-                    <span>Gemini API Ready</span>
+                    <span>RAYS Engine Ready</span>
                 </div>
                 {% endif %}
                 <button class="clear-history-btn" id="clearHistoryBtn">
@@ -81,7 +84,7 @@
                         <h2 class="chat-title" id="chatTitle">New Conversation</h2>
                         <div class="chat-status">
                             <span class="status-indicator"></span>
-                            <span class="status-text">Gemini 1.5 Flash</span>
+                            <span class="status-text">RAYS AI Assistant</span>
                         </div>
                     </div>
                 </div>
@@ -97,10 +100,10 @@
                 <!-- Welcome/Landing Screen (visible when no messages) -->
                 <div class="welcome-screen" id="welcomeScreen">
                     <div class="welcome-logo">
-                        <i data-lucide="sparkles"></i>
+                        <i data-lucide="sun"></i>
                     </div>
-                    <h1>Welcome to Gemini Chat</h1>
-                    <p class="welcome-subtitle">A modern, responsive AI-powered assistant designed for speed and productivity.</p>
+                    <h1>Welcome to RAYS</h1>
+                    <p class="welcome-subtitle"><strong>R</strong>ight <strong>A</strong>t <strong>Y</strong>our <strong>S</strong>ervice — A modern, fast, and intelligent AI assistant designed for productivity.</p>
                     
                     <div class="suggestions-grid">
                         <div class="suggestion-card" data-prompt="Explain quantum computing in simple terms.">
@@ -157,7 +160,7 @@
                         <textarea 
                             id="userInput" 
                             rows="1" 
-                            placeholder="Type a message..." 
+                            placeholder="Type a message to RAYS..." 
                             {% if not is_api_configured %}disabled{% endif %}
                         ></textarea>
                         <button 
@@ -169,7 +172,7 @@
                             <i data-lucide="send"></i>
                         </button>
                     </div>
-                    <div class="input-note">Gemini may display inaccurate info, so double-check important responses.</div>
+                    <div class="input-note">RAYS AI may display inaccurate info, so double-check important responses.</div>
                 </form>
             </footer>
         </main>

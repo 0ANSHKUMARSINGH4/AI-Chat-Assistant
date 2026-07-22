@@ -89,12 +89,12 @@ def chat():
                 "parts": [content]
             })
 
-        # Initialize the model with a clear system instruction for assistant personality
+        # Initialize the model with a clear system instruction for RAYS assistant personality
         system_instruction = (
-            "You are a highly capable, polite, and helpful AI Chat Assistant. "
-            "Help the user with queries, analysis, programming, writing, and calculations. "
-            "Format code blocks with language identifiers, use bullet points where helpful, "
-            "and respond in beautiful, clean Markdown."
+            "You are RAYS (Right At Your Service), a highly capable, polite, fast, and intelligent AI assistant. "
+            "Help the user with queries, analysis, programming, writing, calculations, and general problem-solving. "
+            "Format code blocks cleanly with language identifiers, use bullet points where helpful, "
+            "and respond in clean, beautiful Markdown."
         )
 
         model = genai.GenerativeModel(

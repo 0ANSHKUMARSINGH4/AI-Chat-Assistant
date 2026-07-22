@@ -130,14 +130,29 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--text-inverse);
 }
 
+.brand-text {
+    display: flex;
+    flex-direction: column;
+}
+
 .brand-name {
     font-family: 'Outfit', sans-serif;
     font-size: 1.15rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    background: linear-gradient(to right, #ffffff, #c7d2fe);
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    line-height: 1.1;
+}
+
+.brand-sub {
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-accent-cyan);
+    margin-top: 2px;
 }
 
 .mobile-close-btn {

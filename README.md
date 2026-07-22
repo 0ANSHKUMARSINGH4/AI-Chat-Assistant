@@ -1,12 +1,12 @@
-# Premium AI Chat Assistant
+# RAYS — Right At Your Service ☀️
 
-A modern, fast, and responsive web application built with **Flask** and integrated with Google's **Gemini API**. It features an obsidian dark theme, conversation history management, custom Markdown parsing, and a mobile-friendly design.
+**RAYS** (**R**ight **A**t **Y**our **S**ervice) is a modern, fast, and responsive AI Chat Assistant web application built with **Flask** and powered by Google's **Gemini API**. It features an obsidian dark theme, conversation history management, custom Markdown rendering, and a mobile-friendly layout.
 
 ---
 
 ## ✨ Features
 
-- **Gemini 1.5 Flash Integration:** Seamlessly communicates with Google Gemini to answer questions, analyze concepts, draft content, and write code.
+- **RAYS AI Engine:** Intelligent responses powered by Google's Gemini 1.5 Flash API for rapid Q&A, code writing, problem-solving, and creative drafting.
 - **Persistent Conversation History:** Start multiple threads, switch between them, and delete conversations as needed. Chat threads persist across page reloads using browser `localStorage`.
 - **Custom Markdown Parsing:** Dynamic rendering of markdown elements (headers, lists, tables, bold text).
 - **Code Block Container with One-Click Copy:** Automatic formatting for code sections with a custom language header and a responsive **Copy** button.
