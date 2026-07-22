@@ -6,7 +6,7 @@
 
 ## ✨ Features
 
-- **RAYS AI Engine:** Intelligent responses powered by Google's Gemini 1.5 Flash API for rapid Q&A, code writing, problem-solving, and creative drafting.
+- **RAYS AI Engine:** Intelligent responses powered by Google's **Gemini 3.6 Flash** API for rapid Q&A, code writing, problem-solving, and creative drafting.
 - **Persistent Conversation History:** Start multiple threads, switch between them, and delete conversations as needed. Chat threads persist across page reloads using browser `localStorage`.
 - **Custom Markdown Parsing:** Dynamic rendering of markdown elements (headers, lists, tables, bold text).
 - **Code Block Container with One-Click Copy:** Automatic formatting for code sections with a custom language header and a responsive **Copy** button.
