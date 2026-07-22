@@ -1,5 +1,7 @@
 # RAYS — Right At Your Service ☀️
 
+> 🌐 **Live Demo:** [https://ai-chat-assistant-w406.onrender.com](https://ai-chat-assistant-w406.onrender.com)
+
 **RAYS** (**R**ight **A**t **Y**our **S**ervice) is a modern, fast, and responsive AI Chat Assistant web application built with **Flask** and powered by Google's **Gemini API**. It features an obsidian dark theme, conversation history management, custom Markdown rendering, and a mobile-friendly layout.
 
 ---
