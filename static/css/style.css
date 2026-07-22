@@ -114,14 +114,22 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .brand-logo {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent-purple) 100%);
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    background: transparent;
+}
+
+.logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--radius-md);
 }
 
 .logo-icon {

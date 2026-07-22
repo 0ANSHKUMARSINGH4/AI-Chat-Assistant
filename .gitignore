@@ -19,3 +19,7 @@ venv.bak/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Root raw asset files
+RAYSLogo.png
+
