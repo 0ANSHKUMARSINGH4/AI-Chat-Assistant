@@ -100,7 +100,13 @@ document.addEventListener('DOMContentLoaded', () => {
         userInfoBox.style.display = 'flex';
         userUsernameDisplay.textContent = currentUser.username;
         userEmailDisplay.textContent = currentUser.email;
-        userAvatarInitial.textContent = currentUser.username.charAt(0).toUpperCase();
+
+        const avatarBadge = document.querySelector('.user-avatar-badge');
+        if (currentUser.profile_pic) {
+            avatarBadge.innerHTML = `<img src="${escapeHtml(currentUser.profile_pic)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="Avatar">`;
+        } else {
+            avatarBadge.innerHTML = `<span class="user-avatar-initial" id="userAvatarInitial">${escapeHtml(currentUser.username.charAt(0).toUpperCase())}</span>`;
+        }
     }
 
     function renderGuestProfile() {
