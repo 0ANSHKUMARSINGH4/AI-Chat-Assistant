@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Assistant</title>
+    
+    <!-- Google Fonts: Outfit (Headings) & Inter (Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- CSS Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <div class="brand-logo">
+                        <i data-lucide="sparkles" class="logo-icon"></i>
+                    </div>
+                    <span class="brand-name">Gemini Chat</span>
+                </div>
+                <button class="mobile-close-btn" id="mobileCloseBtn">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            
+            <button class="new-chat-btn" id="newChatBtn">
+                <i data-lucide="plus" class="btn-icon"></i>
+                <span>New Chat</span>
+            </button>
+            
+            <div class="sidebar-scrollable">
+                <div class="history-section">
+                    <h3 class="section-title">Recent Chats</h3>
+                    <div class="chat-list" id="chatList">
+                        <!-- Conversation list populated dynamically -->
+                        <div class="empty-history" id="emptyHistory">
+                            <i data-lucide="message-square" class="empty-icon"></i>
+                            <p>No chat history yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                {% if not is_api_configured %}
+                <div class="api-warning-badge">
+                    <i data-lucide="alert-triangle" class="warning-icon"></i>
+                    <span>API Key Missing</span>
+                </div>
+                {% else %}
+                <div class="api-success-badge">
+                    <i data-lucide="check-circle" class="success-icon"></i>
+                    <span>Gemini API Ready</span>
+                </div>
+                {% endif %}
+                <button class="clear-history-btn" id="clearHistoryBtn">
+                    <i data-lucide="trash-2" class="btn-icon"></i>
+                    <span>Clear All Conversations</span>
+                </button>
+            </div>
+        </aside>
+        
+        <!-- Main Chat Area -->
+        <main class="chat-area">
+            <!-- Top Navigation Bar -->
+            <header class="chat-header">
+                <div class="header-left">
+                    <button class="menu-toggle-btn" id="menuToggleBtn">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <div class="active-chat-info">
+                        <h2 class="chat-title" id="chatTitle">New Conversation</h2>
+                        <div class="chat-status">
+                            <span class="status-indicator"></span>
+                            <span class="status-text">Gemini 1.5 Flash</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="action-btn" id="shareBtn" title="Copy Chat Share Link">
+                        <i data-lucide="share-2"></i>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Chat Messages Container -->
+            <div class="chat-messages-container" id="chatMessagesContainer">
+                <!-- Welcome/Landing Screen (visible when no messages) -->
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-logo">
+                        <i data-lucide="sparkles"></i>
+                    </div>
+                    <h1>Welcome to Gemini Chat</h1>
+                    <p class="welcome-subtitle">A modern, responsive AI-powered assistant designed for speed and productivity.</p>
+                    
+                    <div class="suggestions-grid">
+                        <div class="suggestion-card" data-prompt="Explain quantum computing in simple terms.">
+                            <div class="card-icon"><i data-lucide="cpu"></i></div>
+                            <h3>Explain Quantum Physics</h3>
+                            <p>"Explain quantum computing in simple terms."</p>
+                        </div>
+                        <div class="suggestion-card" data-prompt="Write a Python function to find the nth Fibonacci number.">
+                            <div class="card-icon"><i data-lucide="code"></i></div>
+                            <h3>Write prime/Fibonacci code</h3>
+                            <p>"Write a Python function to find the nth Fibonacci number."</p>
+                        </div>
+                        <div class="suggestion-card" data-prompt="Draft a professional email suggesting a remote work pilot program.">
+                            <div class="card-icon"><i data-lucide="mail"></i></div>
+                            <h3>Draft email proposal</h3>
+                            <p>"Draft a professional email suggesting a remote work pilot program."</p>
+                        </div>
+                        <div class="suggestion-card" data-prompt="Give me 5 creative ideas for a weekend trip nearby.">
+                            <div class="card-icon"><i data-lucide="compass"></i></div>
+                            <h3>Plan weekend activities</h3>
+                            <p>"Give me 5 creative ideas for a weekend trip nearby."</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="messages-list" id="messagesList">
+                    <!-- Messages will be injected here dynamically -->
+                </div>
+                
+                <!-- Typing Indicator / Loading State -->
+                <div class="typing-indicator-wrapper" id="typingIndicator">
+                    <div class="avatar assistant-avatar">
+                        <i data-lucide="bot"></i>
+                    </div>
+                    <div class="typing-bubble">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Floating User Input Area -->
+            <footer class="chat-input-area">
+                {% if not is_api_configured %}
+                <div class="error-banner">
+                    <i data-lucide="alert-circle" class="error-icon"></i>
+                    <p>API key is missing! Please configure <code>GEMINI_API_KEY</code> in the <code>.env</code> file, then restart the Flask server.</p>
+                </div>
+                {% endif %}
+                
+                <form class="input-form" id="inputForm">
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="userInput" 
+                            rows="1" 
+                            placeholder="Type a message..." 
+                            {% if not is_api_configured %}disabled{% endif %}
+                        ></textarea>
+                        <button 
+                            type="submit" 
+                            id="sendBtn" 
+                            title="Send message"
+                            {% if not is_api_configured %}disabled{% endif %}
+                        >
+                            <i data-lucide="send"></i>
+                        </button>
+                    </div>
+                    <div class="input-note">Gemini may display inaccurate info, so double-check important responses.</div>
+                </form>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast">
+        <i data-lucide="info" class="toast-icon"></i>
+        <span class="toast-text">Text copied!</span>
+    </div>
+
+    <!-- Marked JS for Markdown Parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Javascript Application Logic -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
