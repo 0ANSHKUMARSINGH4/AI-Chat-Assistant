@@ -74,6 +74,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function checkAuthStatus() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('auth_error')) {
+            const err = urlParams.get('auth_error');
+            if (err === 'google_not_configured') {
+                showToast("Google Sign-In is optional & disabled. Please use Email & Password!");
+            }
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
         try {
             const res = await fetch('/api/auth/me');
             const data = await res.json();
