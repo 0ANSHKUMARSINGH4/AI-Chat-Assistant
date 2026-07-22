@@ -20,6 +20,11 @@ venv.bak/
 .DS_Store
 Thumbs.db
 
+# Databases
+*.db
+instance/
+
 # Root raw asset files
 RAYSLogo.png
+
 

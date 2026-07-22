@@ -20,7 +20,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const shareBtn = document.getElementById('shareBtn');
     const toast = document.getElementById('toast');
 
+    // Auth Elements
+    const authModalOverlay = document.getElementById('authModalOverlay');
+    const openAuthModalBtn = document.getElementById('openAuthModalBtn');
+    const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
+    const tabLoginBtn = document.getElementById('tabLoginBtn');
+    const tabSignupBtn = document.getElementById('tabSignupBtn');
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+    const authAlert = document.getElementById('authAlert');
+    
+    const guestAuthBox = document.getElementById('guestAuthBox');
+    const userInfoBox = document.getElementById('userInfoBox');
+    const userAvatarInitial = document.getElementById('userAvatarInitial');
+    const userUsernameDisplay = document.getElementById('userUsernameDisplay');
+    const userEmailDisplay = document.getElementById('userEmailDisplay');
+    const logoutBtn = document.getElementById('logoutBtn');
+
     // App State
+    let currentUser = null;
     let conversations = [];
     let activeConversationId = null;
 
@@ -29,8 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderer.code = function(code, language) {
         const uniqueId = 'code_' + Math.random().toString(36).substring(2, 11);
         const lang = language ? language : 'text';
-        
-        // Clean up code block representation
         const rawCode = typeof code === 'object' ? code.text : code;
         
         return `
@@ -51,23 +67,80 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize the App
     init();
 
-    function init() {
-        // Load data from localStorage
+    async function init() {
+        setupEventListeners();
+        await checkAuthStatus();
+        lucide.createIcons();
+    }
+
+    async function checkAuthStatus() {
+        try {
+            const res = await fetch('/api/auth/me');
+            const data = await res.json();
+
+            if (data.authenticated && data.user) {
+                currentUser = data.user;
+                renderUserProfile();
+                await fetchUserConversations();
+            } else {
+                currentUser = null;
+                renderGuestProfile();
+                loadGuestConversations();
+            }
+        } catch (e) {
+            console.error("Auth status check failed", e);
+            currentUser = null;
+            renderGuestProfile();
+            loadGuestConversations();
+        }
+    }
+
+    function renderUserProfile() {
+        guestAuthBox.style.display = 'none';
+        userInfoBox.style.display = 'flex';
+        userUsernameDisplay.textContent = currentUser.username;
+        userEmailDisplay.textContent = currentUser.email;
+        userAvatarInitial.textContent = currentUser.username.charAt(0).toUpperCase();
+    }
+
+    function renderGuestProfile() {
+        guestAuthBox.style.display = 'block';
+        userInfoBox.style.display = 'none';
+    }
+
+    async function fetchUserConversations() {
+        try {
+            const res = await fetch('/api/conversations');
+            if (res.ok) {
+                conversations = await res.json();
+                renderSidebar();
+
+                if (conversations.length > 0) {
+                    loadConversation(conversations[0].id);
+                } else {
+                    showWelcomeScreen();
+                }
+            }
+        } catch (e) {
+            console.error("Failed to fetch user conversations", e);
+        }
+    }
+
+    function loadGuestConversations() {
         const storedConversations = localStorage.getItem('rays_chats') || localStorage.getItem('gemini_chats');
         if (storedConversations) {
             try {
                 conversations = JSON.parse(storedConversations);
             } catch (e) {
-                console.error("Failed to parse stored conversations", e);
                 conversations = [];
             }
+        } else {
+            conversations = [];
         }
-        
-        const lastActiveId = localStorage.getItem('rays_active_chat') || localStorage.getItem('gemini_active_chat');
-        
+
         renderSidebar();
-        
-        // Load active conversation or start a new one
+
+        const lastActiveId = localStorage.getItem('rays_active_chat') || localStorage.getItem('gemini_active_chat');
         if (lastActiveId && conversations.some(c => c.id === lastActiveId)) {
             loadConversation(lastActiveId);
         } else if (conversations.length > 0) {
@@ -75,43 +148,27 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             showWelcomeScreen();
         }
-
-        // Setup Event Listeners
-        setupEventListeners();
-        
-        // Initial Lucide icons initialization
-        lucide.createIcons();
     }
 
     function setupEventListeners() {
         // Toggle Sidebar on mobile
-        menuToggleBtn.addEventListener('click', () => {
-            sidebar.classList.add('open');
-        });
-        
-        mobileCloseBtn.addEventListener('click', () => {
-            sidebar.classList.remove('open');
-        });
+        menuToggleBtn.addEventListener('click', () => sidebar.classList.add('open'));
+        mobileCloseBtn.addEventListener('click', () => sidebar.classList.remove('open'));
 
-        // Close sidebar on main click if screen is mobile size
         chatMessagesContainer.addEventListener('click', () => {
-            if (window.innerWidth <= 768) {
-                sidebar.classList.remove('open');
-            }
+            if (window.innerWidth <= 768) sidebar.classList.remove('open');
         });
 
         // Create New Chat
         newChatBtn.addEventListener('click', () => {
             createNewChat();
-            if (window.innerWidth <= 768) {
-                sidebar.classList.remove('open');
-            }
+            if (window.innerWidth <= 768) sidebar.classList.remove('open');
         });
 
         // Clear All History
-        clearHistoryBtn.addEventListener('click', () => {
+        clearHistoryBtn.addEventListener('click', async () => {
             if (confirm("Are you sure you want to clear all conversations? This action cannot be undone.")) {
-                clearAllConversations();
+                await clearAllConversations();
             }
         });
 
@@ -127,7 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
             handleMessageSubmit();
         });
 
-        // Enter key submits the form, Shift+Enter adds newline
         userInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -141,35 +197,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 const prompt = card.getAttribute('data-prompt');
                 if (prompt) {
                     userInput.value = prompt;
-                    userInput.dispatchEvent(new Event('input')); // trigger height resize
+                    userInput.dispatchEvent(new Event('input'));
                     handleMessageSubmit();
                 }
             });
         });
 
-        // Copy button delegation in code blocks
+        // Copy code block event delegation
         chatMessagesContainer.addEventListener('click', (e) => {
             const copyBtn = e.target.closest('.copy-code-btn');
             if (copyBtn) {
                 const codeId = copyBtn.getAttribute('data-code-id');
                 const codeElem = document.getElementById(codeId);
                 if (codeElem) {
-                    const text = codeElem.textContent;
-                    navigator.clipboard.writeText(text).then(() => {
+                    navigator.clipboard.writeText(codeElem.textContent).then(() => {
                         const span = copyBtn.querySelector('span');
-                        const icon = copyBtn.querySelector('i');
-                        
                         span.textContent = 'Copied!';
                         copyBtn.classList.add('copied');
-                        
                         showToast('Code copied to clipboard!');
-                        
                         setTimeout(() => {
                             span.textContent = 'Copy';
                             copyBtn.classList.remove('copied');
                         }, 2000);
-                    }).catch(err => {
-                        console.error('Failed to copy text: ', err);
                     });
                 }
             }
@@ -181,29 +230,133 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Chat page link copied!');
             });
         });
+
+        // --- Auth Modal Event Listeners ---
+        openAuthModalBtn.addEventListener('click', () => {
+            authAlert.style.display = 'none';
+            authModalOverlay.style.display = 'flex';
+        });
+
+        closeAuthModalBtn.addEventListener('click', () => {
+            authModalOverlay.style.display = 'none';
+        });
+
+        authModalOverlay.addEventListener('click', (e) => {
+            if (e.target === authModalOverlay) authModalOverlay.style.display = 'none';
+        });
+
+        tabLoginBtn.addEventListener('click', () => {
+            tabLoginBtn.classList.add('active');
+            tabSignupBtn.classList.remove('active');
+            loginForm.style.display = 'block';
+            signupForm.style.display = 'none';
+            authAlert.style.display = 'none';
+        });
+
+        tabSignupBtn.addEventListener('click', () => {
+            tabSignupBtn.classList.add('active');
+            tabLoginBtn.classList.remove('active');
+            signupForm.style.display = 'block';
+            loginForm.style.display = 'none';
+            authAlert.style.display = 'none';
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const identifier = document.getElementById('loginIdentifier').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier, password })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    showAuthAlert(data.error || 'Login failed.');
+                    return;
+                }
+
+                currentUser = data.user;
+                renderUserProfile();
+                authModalOverlay.style.display = 'none';
+                loginForm.reset();
+                showToast(`Welcome back, ${currentUser.username}!`);
+                await fetchUserConversations();
+            } catch (err) {
+                showAuthAlert('An error occurred during login.');
+            }
+        });
+
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('signupUsername').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+
+            try {
+                const res = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    showAuthAlert(data.error || 'Sign up failed.');
+                    return;
+                }
+
+                currentUser = data.user;
+                renderUserProfile();
+                authModalOverlay.style.display = 'none';
+                signupForm.reset();
+                showToast(`Account created! Welcome, ${currentUser.username}.`);
+                await fetchUserConversations();
+            } catch (err) {
+                showAuthAlert('An error occurred during sign up.');
+            }
+        });
+
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                currentUser = null;
+                renderGuestProfile();
+                loadGuestConversations();
+                showToast('Logged out successfully');
+            } catch (e) {
+                console.error("Logout error", e);
+            }
+        });
     }
 
-    // --- State and UI Update Functions ---
+    function showAuthAlert(msg) {
+        authAlert.textContent = msg;
+        authAlert.style.display = 'block';
+    }
 
-    function saveState() {
-        localStorage.setItem('rays_chats', JSON.stringify(conversations));
-        if (activeConversationId) {
-            localStorage.setItem('rays_active_chat', activeConversationId);
-        } else {
-            localStorage.removeItem('rays_active_chat');
+    function saveGuestState() {
+        if (!currentUser) {
+            localStorage.setItem('rays_chats', JSON.stringify(conversations));
+            if (activeConversationId) {
+                localStorage.setItem('rays_active_chat', activeConversationId);
+            } else {
+                localStorage.removeItem('rays_active_chat');
+            }
         }
     }
 
     function renderSidebar() {
         chatList.innerHTML = '';
-        
         if (conversations.length === 0) {
             emptyHistory.style.display = 'flex';
             return;
         }
         
         emptyHistory.style.display = 'none';
-        
         conversations.forEach(chat => {
             const chatItem = document.createElement('div');
             chatItem.className = `chat-history-item ${chat.id === activeConversationId ? 'active' : ''}`;
@@ -219,15 +372,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 </button>
             `;
             
-            // Click to load chat
             chatItem.querySelector('.chat-item-left').addEventListener('click', () => {
                 loadConversation(chat.id);
-                if (window.innerWidth <= 768) {
-                    sidebar.classList.remove('open');
-                }
+                if (window.innerWidth <= 768) sidebar.classList.remove('open');
             });
             
-            // Delete button functionality
             chatItem.querySelector('.delete-chat-btn').addEventListener('click', (e) => {
                 e.stopPropagation();
                 deleteConversation(chat.id);
@@ -247,9 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userInput.style.height = 'auto';
         userInput.focus();
         
-        document.querySelectorAll('.chat-history-item').forEach(item => {
-            item.classList.remove('active');
-        });
+        document.querySelectorAll('.chat-history-item').forEach(item => item.classList.remove('active'));
     }
 
     function showWelcomeScreen() {
@@ -260,66 +407,110 @@ document.addEventListener('DOMContentLoaded', () => {
         chatTitle.textContent = "New Conversation";
     }
 
-    function loadConversation(id) {
-        const chat = conversations.find(c => c.id === id);
-        if (!chat) return;
-        
+    async function loadConversation(id) {
         activeConversationId = id;
-        saveState();
-        renderSidebar();
-        
-        welcomeScreen.style.display = 'none';
-        messagesList.innerHTML = '';
-        chatTitle.textContent = chat.title;
-        
-        chat.messages.forEach(msg => {
-            appendMessageHTML(msg.role, msg.content);
-        });
-        
-        scrollToBottom();
-        userInput.focus();
-    }
 
-    function deleteConversation(id) {
-        conversations = conversations.filter(c => c.id !== id);
-        
-        if (activeConversationId === id) {
-            activeConversationId = null;
-            if (conversations.length > 0) {
-                loadConversation(conversations[0].id);
-            } else {
-                createNewChat();
-            }
-        } else {
-            saveState();
+        if (!currentUser) {
+            saveGuestState();
             renderSidebar();
+            const chat = conversations.find(c => c.id === id);
+            if (!chat) return;
+            welcomeScreen.style.display = 'none';
+            messagesList.innerHTML = '';
+            chatTitle.textContent = chat.title;
+            (chat.messages || []).forEach(msg => appendMessageHTML(msg.role, msg.content));
+            scrollToBottom();
+            userInput.focus();
+            return;
+        }
+
+        // Logged-in user: fetch full detail from server DB
+        try {
+            const res = await fetch(`/api/conversations/${id}`);
+            if (res.ok) {
+                const chat = await res.json();
+                renderSidebar();
+                welcomeScreen.style.display = 'none';
+                messagesList.innerHTML = '';
+                chatTitle.textContent = chat.title;
+                (chat.messages || []).forEach(msg => appendMessageHTML(msg.role, msg.content));
+                scrollToBottom();
+                userInput.focus();
+            }
+        } catch (e) {
+            console.error("Failed to load conversation details", e);
         }
     }
 
-    function clearAllConversations() {
-        conversations = [];
-        activeConversationId = null;
-        saveState();
-        renderSidebar();
-        createNewChat();
-        showToast("Cleared all conversations");
+    async function deleteConversation(id) {
+        if (currentUser) {
+            try {
+                await fetch(`/api/conversations/${id}`, { method: 'DELETE' });
+                conversations = conversations.filter(c => c.id !== id);
+                if (activeConversationId === id) {
+                    activeConversationId = null;
+                    if (conversations.length > 0) {
+                        loadConversation(conversations[0].id);
+                    } else {
+                        createNewChat();
+                    }
+                } else {
+                    renderSidebar();
+                }
+            } catch (e) {
+                console.error("Failed to delete conversation", e);
+            }
+        } else {
+            conversations = conversations.filter(c => c.id !== id);
+            if (activeConversationId === id) {
+                activeConversationId = null;
+                if (conversations.length > 0) {
+                    loadConversation(conversations[0].id);
+                } else {
+                    createNewChat();
+                }
+            } else {
+                saveGuestState();
+                renderSidebar();
+            }
+        }
     }
 
-    function handleMessageSubmit() {
+    async function clearAllConversations() {
+        if (currentUser) {
+            try {
+                await fetch('/api/conversations/clear', { method: 'DELETE' });
+                conversations = [];
+                activeConversationId = null;
+                renderSidebar();
+                createNewChat();
+                showToast("Cleared all conversations");
+            } catch (e) {
+                console.error("Failed to clear conversations", e);
+            }
+        } else {
+            conversations = [];
+            activeConversationId = null;
+            saveGuestState();
+            renderSidebar();
+            createNewChat();
+            showToast("Cleared all conversations");
+        }
+    }
+
+    async function handleMessageSubmit() {
         const text = userInput.value.trim();
         if (!text) return;
         
-        // Clear input field and trigger height adjust
         userInput.value = '';
         userInput.style.height = 'auto';
         
-        // Hide welcome screen if it was active
         if (welcomeScreen.style.display !== 'none') {
             welcomeScreen.style.display = 'none';
         }
-        
-        // Handle new conversation creation logic if active conversation is null
-        if (!activeConversationId) {
+
+        // Temporary guest conversation creation
+        if (!currentUser && !activeConversationId) {
             const tempId = 'chat_' + Date.now();
             const newChat = {
                 id: tempId,
@@ -329,100 +520,100 @@ document.addEventListener('DOMContentLoaded', () => {
             conversations.unshift(newChat);
             activeConversationId = tempId;
         }
-        
-        // Append user message in state
-        const currentChat = conversations.find(c => c.id === activeConversationId);
-        const userMsg = { role: 'user', content: text };
-        currentChat.messages.push(userMsg);
-        
-        // Append in DOM
+
+        let currentMessages = [];
+        if (!currentUser) {
+            const currentChat = conversations.find(c => c.id === activeConversationId);
+            if (currentChat) {
+                currentChat.messages.push({ role: 'user', content: text });
+                currentMessages = currentChat.messages.slice(0, -1);
+            }
+        }
+
         appendMessageHTML('user', text);
         scrollToBottom();
-        
-        // Update sidebar to display new chat item and active status
-        saveState();
+
+        saveGuestState();
         renderSidebar();
-        
-        // Show typing indicator
+
         typingIndicator.style.display = 'flex';
         scrollToBottom();
-        
-        // Disable input during request
+
         userInput.disabled = true;
         sendBtn.disabled = true;
-        
-        // Perform API request
-        fetch('/api/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                message: text,
-                history: currentChat.messages.slice(0, -1) // send everything except the message we just added
-            })
-        })
-        .then(res => {
+
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: text,
+                    history: currentMessages,
+                    conversation_id: activeConversationId
+                })
+            });
+
             if (!res.ok) {
-                return res.json().then(errData => {
-                    throw new Error(errData.error || `Server responded with status ${res.status}`);
-                });
+                const errData = await res.json();
+                throw new Error(errData.error || `Server error ${res.status}`);
             }
-            return res.json();
-        })
-        .then(data => {
+
+            const data = await res.json();
             const aiResponseText = data.response;
-            
-            // Save AI response in state
-            const aiMsg = { role: 'model', content: aiResponseText };
-            currentChat.messages.push(aiMsg);
-            saveState();
-            
-            // Append in DOM
+
+            if (currentUser) {
+                if (data.conversation_id) {
+                    activeConversationId = data.conversation_id;
+                    const existing = conversations.find(c => c.id === data.conversation_id);
+                    if (!existing) {
+                        conversations.unshift({
+                            id: data.conversation_id,
+                            title: data.title || text.substring(0, 30),
+                            created_at: new Date().toISOString()
+                        });
+                    }
+                }
+                renderSidebar();
+            } else {
+                const currentChat = conversations.find(c => c.id === activeConversationId);
+                if (currentChat) {
+                    currentChat.messages.push({ role: 'model', content: aiResponseText });
+                    saveGuestState();
+                }
+            }
+
             appendMessageHTML('model', aiResponseText);
-        })
-        .catch(err => {
+
+        } catch (err) {
             console.error("API error", err);
             appendMessageHTML('system-error', `**Error:** ${err.message}`);
-        })
-        .finally(() => {
-            // Hide typing indicator
+        } finally {
             typingIndicator.style.display = 'none';
             scrollToBottom();
-            
-            // Re-enable input
             userInput.disabled = false;
             sendBtn.disabled = false;
             userInput.focus();
-        });
+        }
     }
 
     function appendMessageHTML(role, content) {
         const wrapper = document.createElement('div');
         wrapper.className = `message-wrapper ${role === 'user' ? 'user' : 'assistant'}`;
-        
-        if (role === 'system-error') {
-            wrapper.className = 'message-wrapper assistant';
-        }
-        
-        let avatarHTML = '';
-        if (role === 'user') {
-            avatarHTML = `<div class="avatar user-avatar"><i data-lucide="user"></i></div>`;
-        } else {
-            avatarHTML = `<div class="avatar assistant-avatar"><i data-lucide="bot"></i></div>`;
-        }
-        
+        if (role === 'system-error') wrapper.className = 'message-wrapper assistant';
+
+        let avatarHTML = role === 'user' 
+            ? `<div class="avatar user-avatar"><i data-lucide="user"></i></div>`
+            : `<div class="avatar assistant-avatar"><i data-lucide="bot"></i></div>`;
+
         let processedContent = '';
         if (role === 'user') {
-            // User messages are rendered plain text (escaping code symbols) but preserving linebreaks
             processedContent = `<p>${escapeHtml(content).replace(/\n/g, '<br>')}</p>`;
         } else if (role === 'system-error') {
             processedContent = `<div style="color: var(--color-error);"><i data-lucide="alert-octagon" style="width:16px;height:16px;vertical-align:middle;margin-right:8px;"></i>${marked.parse(content)}</div>`;
         } else {
-            // Model messages parsed with marked.js for full markdown
             processedContent = marked.parse(content);
         }
-        
+
         wrapper.innerHTML = `
             ${role === 'user' ? '' : avatarHTML}
             <div class="message-bubble">
@@ -430,14 +621,10 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             ${role === 'user' ? avatarHTML : ''}
         `;
-        
+
         messagesList.appendChild(wrapper);
-        
-        // Regenerate Lucide icons inside new elements
         lucide.createIcons();
     }
-
-    // Helper functions
 
     function scrollToBottom() {
         chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
@@ -447,10 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const toastText = toast.querySelector('.toast-text');
         toastText.textContent = text;
         toast.classList.add('show');
-        
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
+        setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
     function escapeHtml(text) {
